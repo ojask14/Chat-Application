@@ -1,40 +1,61 @@
 <div class="chat-container">
   
   <div class="sidebar-zone">
-    <h3 class="sidebar-title">Active Chats</h3>
+    <h3 style="padding: 16px 16px 8px 16px; margin: 0; color: #555; font-weight: 500;">Active Chats</h3>
     <mat-selection-list [multiple]="false">
-      <mat-list-option value="user1">
+      
+      <mat-list-option value="user1" [selected]="selectedUser === 'Ojas'" (click)="selectUser('Ojas')">
         <mat-icon matListItemIcon>account_circle</mat-icon>
         <span matListItemTitle>Ojas</span>
-        <span matListItemLine class="status-online">Online</span>
+        <span matListItemLine style="color: #2e7d32; font-size: 12px;">Online</span>
       </mat-list-option>
-      <mat-list-option value="user2">
+      
+      <mat-list-option value="user2" [selected]="selectedUser === 'Vineet'" (click)="selectUser('Vineet')">
         <mat-icon matListItemIcon>account_circle</mat-icon>
         <span matListItemTitle>Vineet</span>
-        <span matListItemLine class="status-away">Away</span>
+        <span matListItemLine style="color: #757575; font-size: 12px;">Away</span>
       </mat-list-option>
+      
     </mat-selection-list>
   </div>
 
   <div class="main-chat-zone">
     
     <div class="messages-container">
-      <div class="bubble-stream">
-        <mat-card class="msg-card msg-incoming">
-          <mat-card-content>Hey there! Welcome to the chat system workspace.</mat-card-content>
-        </mat-card>
-        <mat-card class="msg-card msg-outgoing">
-          <mat-card-content>Awesome, the UI setup looks perfect and responsive!</mat-card-content>
-        </mat-card>
+      
+      <div class="bubble-stream" *ngIf="selectedUser === 'Ojas'">
+        <div class="msg-bubble msg-incoming">Hey there! Welcome to the chat system workspace.</div>
+        
+        <ng-container *ngFor="let msg of messages">
+          <div *ngIf="msg.chatWith === 'Ojas'"
+               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
+               class="msg-bubble">
+            {{ msg.text }}
+          </div>
+        </ng-container>
       </div>
+
+      <div class="bubble-stream" *ngIf="selectedUser === 'Vineet'">
+        <div class="msg-bubble msg-incoming">hello</div>
+        <div class="msg-bubble msg-incoming">how are you?</div>
+        
+        <ng-container *ngFor="let msg of messages">
+          <div *ngIf="msg.chatWith === 'Vineet'"
+               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
+               class="msg-bubble">
+            {{ msg.text }}
+          </div>
+        </ng-container>
+      </div>
+
     </div>
 
     <div class="input-container">
       <mat-form-field appearance="outline" class="input-field">
         <mat-label>Type a message...</mat-label>
-        <input matInput placeholder="Say something...">
+        <input matInput [(ngModel)]="newMessage" (keyup.enter)="onSendMessage()" placeholder="Say something...">
       </mat-form-field>
-      <button mat-fab color="primary" aria-label="Send message">
+      <button mat-fab color="primary" (click)="onSendMessage()">
         <mat-icon>send</mat-icon>
       </button>
     </div>

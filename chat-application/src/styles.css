@@ -1,1 +1,77 @@
-/* You can add global styles to this file, and also import other style files */
+/* --- Global Chat Workspace Layout Reset --- */
+.chat-container {
+  display: flex !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.sidebar-zone {
+  width: 300px !important;
+  background-color: #f5f5f5 !important;
+  border-right: 1px solid #e0e0e0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.main-chat-zone {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  height: 100% !important;
+  background-color: #fafafa !important;
+}
+
+.messages-container {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 20px !important;
+}
+
+.bubble-stream {
+  display: flex !important; 
+  flex-direction: column !important; 
+  gap: 12px !important;
+}
+
+/* --- Clean Message Bubbles --- */
+.msg-bubble {
+  max-width: 60% !important; 
+  padding: 12px 16px !important;
+  font-family: Roboto, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+  margin-bottom: 4px !important;
+}
+
+.msg-incoming {
+  align-self: flex-start !important; 
+  background-color: #ffffff !important; 
+  color: #333333 !important;
+  border-radius: 4px 12px 12px 12px !important;
+}
+
+.msg-outgoing {
+  align-self: flex-end !important; 
+  background-color: #e3f2fd !important; 
+  color: #0d47a1 !important;
+  border-radius: 12px 12px 4px 12px !important;
+}
+
+.input-container {
+  padding: 16px !important;
+  background-color: #ffffff !important;
+  border-top: 1px solid #e0e0e0 !important;
+  display: flex !important; 
+  align-items: center !important; 
+  gap: 12px !important; 
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.input-field {
+  flex: 1 !important;
+  margin-bottom: -20px !important;
+}
