@@ -1,52 +1,62 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
+export interface PresenceUpdate {
+  username: string;
+  status: 'Online' | 'Offline' | 'Away';
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ChatService {
   private socket!: WebSocket;
   private messageSubject: Subject<any> = new Subject<any>();
+  private presenceSubject: Subject<PresenceUpdate> = new Subject<PresenceUpdate>();
 
   constructor() {
     this.connect();
+    this.startPresenceSimulation();
   }
 
   private connect(): void {
-    // Using a reliable, free public echo server for real-time testing simulation
     this.socket = new WebSocket('wss://echo.websocket.org');
 
     this.socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        this.messageSubject.next(data);
-      } catch (e) {
-        // Fallback if data isn't JSON strings
-        this.messageSubject.next({ text: event.data, sender: 'Ojas', time: new Date() });
-      }
+      this.messageSubject.next(event.data);
     };
 
-    this.socket.onclose = (event) => {
-      console.log('WebSocket closed. Reconnecting...');
-      setTimeout(() => this.connect(), 3000); // Auto-reconnect safety
-    };
-
-    this.socket.onerror = (error) => {
-      console.error('WebSocket Error: ', error);
+    this.socket.onclose = () => {
+      setTimeout(() => this.connect(), 3000);
     };
   }
 
-  // Method to stream incoming messages to the component
   getMessages(): Observable<any> {
     return this.messageSubject.asObservable();
   }
 
-  // Method to push a message across the WebSocket channel
-  sendMessage(messageObj: { text: string; sender: string; time: Date }): void {
+  getPresenceUpdates(): Observable<PresenceUpdate> {
+    return this.presenceSubject.asObservable();
+  }
+
+  sendMessage(plainText: string): void {
     if (this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(messageObj));
-    } else {
-      console.error('WebSocket connection is not open.');
+      this.socket.send(plainText); // Send clean, non-nested string lines
     }
+  }
+
+  private startPresenceSimulation(): void {
+    const users = ['Ojas', 'Vineet'];
+    const statuses: ('Online' | 'Offline' | 'Away')[] = ['Online', 'Offline', 'Away'];
+
+    setInterval(() => {
+      const randomUser = users[Math.floor(Math.random() * users.length)];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      
+      this.presenceSubject.next({
+        username: randomUser,
+        status: randomStatus
+      });
+    }, 6000); // Transitions status state tags clearly every 6 seconds
   }
 }

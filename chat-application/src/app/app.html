@@ -1,53 +1,51 @@
 <div class="chat-container">
   
   <div class="sidebar-zone">
-    <h3 style="padding: 16px 16px 8px 16px; margin: 0; color: #555; font-weight: 500;">Active Chats</h3>
-    <mat-selection-list [multiple]="false">
-      
-      <mat-list-option value="user1" [selected]="selectedUser === 'Ojas'" (click)="selectUser('Ojas')">
-        <mat-icon matListItemIcon>account_circle</mat-icon>
-        <span matListItemTitle>Ojas</span>
-        <span matListItemLine style="color: #2e7d32; font-size: 12px;">Online</span>
-      </mat-list-option>
-      
-      <mat-list-option value="user2" [selected]="selectedUser === 'Vineet'" (click)="selectUser('Vineet')">
-        <mat-icon matListItemIcon>account_circle</mat-icon>
-        <span matListItemTitle>Vineet</span>
-        <span matListItemLine style="color: #757575; font-size: 12px;">Away</span>
-      </mat-list-option>
-      
-    </mat-selection-list>
+    <h3 style="padding: 16px 16px 8px 16px; margin: 0; color: #555; font-weight: 500; font-family: Roboto, sans-serif;">Active Chats</h3>
+    
+    <div (click)="selectUser('Ojas')" 
+         [style.background-color]="selectedUser === 'Ojas' ? '#e8f0fe' : 'transparent'"
+         style="display: flex; align-items: center; padding: 14px 16px; cursor: pointer; gap: 12px; transition: background 0.2s;">
+      <mat-icon style="color: #555;">account_circle</mat-icon>
+      <div style="display: flex; flex-direction: column; font-family: Roboto, sans-serif;">
+        <span style="font-weight: 500; color: #212529; font-size: 14px;">Ojas</span>
+        <span [ngClass]="{
+                'status-online': userRoster[0].status === 'Online',
+                'status-away': userRoster[0].status === 'Away',
+                'status-offline': userRoster[0].status === 'Offline'
+              }">{{ userRoster[0].status }}</span>
+      </div>
+    </div>
+
+    <div (click)="selectUser('Vineet')" 
+         [style.background-color]="selectedUser === 'Vineet' ? '#e8f0fe' : 'transparent'"
+         style="display: flex; align-items: center; padding: 14px 16px; cursor: pointer; gap: 12px; transition: background 0.2s;">
+      <mat-icon style="color: #555;">account_circle</mat-icon>
+      <div style="display: flex; flex-direction: column; font-family: Roboto, sans-serif;">
+        <span style="font-weight: 500; color: #212529; font-size: 14px;">Vineet</span>
+        <span [ngClass]="{
+                'status-online': userRoster[1].status === 'Online',
+                'status-away': userRoster[1].status === 'Away',
+                'status-offline': userRoster[1].status === 'Offline'
+              }">{{ userRoster[1].status }}</span>
+      </div>
+    </div>
+    
   </div>
 
   <div class="main-chat-zone">
-    
     <div class="messages-container">
-      
-      <div class="bubble-stream" *ngIf="selectedUser === 'Ojas'">
-        <div class="msg-bubble msg-incoming">Hey there! Welcome to the chat system workspace.</div>
+      <div class="bubble-stream">
         
         <ng-container *ngFor="let msg of messages">
-          <div *ngIf="msg.chatWith === 'Ojas'"
-               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
+          <div *ngIf="msg.chatWith === selectedUser"
+               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender === 'Them'}"
                class="msg-bubble">
             {{ msg.text }}
           </div>
         </ng-container>
-      </div>
-
-      <div class="bubble-stream" *ngIf="selectedUser === 'Vineet'">
-        <div class="msg-bubble msg-incoming">hello</div>
-        <div class="msg-bubble msg-incoming">how are you?</div>
         
-        <ng-container *ngFor="let msg of messages">
-          <div *ngIf="msg.chatWith === 'Vineet'"
-               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
-               class="msg-bubble">
-            {{ msg.text }}
-          </div>
-        </ng-container>
       </div>
-
     </div>
 
     <div class="input-container">
