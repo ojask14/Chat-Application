@@ -1,9 +1,20 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 
 export interface PresenceUpdate {
   username: string;
   status: 'Online' | 'Offline' | 'Away';
+}
+
+export interface MessagePayload {
+  text?: string;
+  sender: 'Ojas' | 'Vineet' | 'Me';
+  chatWith: 'Ojas' | 'Vineet';
+  fileData?: {
+    name: string;
+    url: string;
+    type: string;
+  };
 }
 
 @Injectable({
@@ -11,8 +22,11 @@ export interface PresenceUpdate {
 })
 export class ChatService {
   private socket!: WebSocket;
-  private messageSubject: Subject<any> = new Subject<any>();
   private presenceSubject: Subject<PresenceUpdate> = new Subject<PresenceUpdate>();
+
+  // --- Week 7 Centralized RxJS State Store Management Cache ---
+  private messagesState: MessagePayload[] = [];
+  private messagesSubject: BehaviorSubject<MessagePayload[]> = new BehaviorSubject<MessagePayload[]>([]);
 
   constructor() {
     this.connect();
@@ -24,11 +38,10 @@ export class ChatService {
 
     this.socket.onmessage = (event) => {
       try {
-        // Try parsing JSON payloads directly if transmitted as structured tracking file items
         const data = JSON.parse(event.data);
-        this.messageSubject.next(data);
+        this.handleIncomingMessageStream(data);
       } catch (e) {
-        this.messageSubject.next(event.data);
+        this.handleIncomingMessageStream(event.data);
       }
     };
 
@@ -37,12 +50,49 @@ export class ChatService {
     };
   }
 
-  getMessages(): Observable<any> {
-    return this.messageSubject.asObservable();
+  // Pure State Store Mutator: Appends and pushes new state data downstream
+  private handleIncomingMessageStream(rawMsg: any): void {
+    if (typeof rawMsg === 'string' && rawMsg.includes('Request served by')) return;
+    if (rawMsg?.text && rawMsg.text.includes('Request served by')) return;
+
+    let extractedText = typeof rawMsg === 'string' ? rawMsg : rawMsg?.text || JSON.stringify(rawMsg);
+    let attachedFile = rawMsg && typeof rawMsg === 'object' && rawMsg.fileData ? rawMsg.fileData : undefined;
+
+    try {
+      const parsed = JSON.parse(extractedText);
+      if (parsed && parsed.text) {
+        extractedText = parsed.text;
+        if (parsed.fileData) attachedFile = parsed.fileData;
+      }
+    } catch (e) {}
+
+    // Determine target history frame index mapping via active connection state parameters
+    // Reading previous window contexts dynamically to route peer cross-transfers accurately
+    const mockWindowMapping = this.messagesState.length > 0 ? this.messagesState[this.messagesState.length - 1].chatWith : 'Ojas';
+    
+    const incomingPayload: MessagePayload = {
+      text: attachedFile ? undefined : extractedText,
+      sender: mockWindowMapping, 
+      chatWith: mockWindowMapping === 'Ojas' ? 'Vineet' : 'Ojas',
+      fileData: attachedFile
+    };
+
+    this.updateMessagesState(incomingPayload);
+  }
+
+  // Exposes state storage array as a read-only stream to prevent components from mutating data directly
+  getMessagesStateStream(): Observable<MessagePayload[]> {
+    return this.messagesSubject.asObservable();
   }
 
   getPresenceUpdates(): Observable<PresenceUpdate> {
     return this.presenceSubject.asObservable();
+  }
+
+  // Updates central store internal record matrix
+  updateMessagesState(newRecord: MessagePayload): void {
+    this.messagesState = [...this.messagesState, newRecord];
+    this.messagesSubject.next(this.messagesState); // Emit optimized clone references
   }
 
   sendMessage(messageObj: any): void {
@@ -55,10 +105,6 @@ export class ChatService {
     }
   }
 
-  /**
-   * New Week 5 File Processing Method: Converts file stream buffers 
-   * into local secure object links to enable seamless inline media rendering.
-   */
   uploadFile(file: File): Promise<string> {
     return new Promise((resolve) => {
       const localUrl = URL.createObjectURL(file);

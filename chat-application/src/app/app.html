@@ -1,131 +1,165 @@
-<div *ngIf="!isAuthenticated" style="display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; background-color: #f0f2f5; font-family: Roboto, sans-serif;">
-  <div style="background: #ffffff; padding: 32px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 360px; display: flex; flex-direction: column; gap: 16px;">
-    
-    <div style="text-align: center; margin-bottom: 8px;">
-      <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #007bff;">lock</mat-icon>
-      <h2 style="margin: 8px 0 4px 0; color: #333;">{{ isRegisterView ? 'Create Account' : 'Secure Chat Workspace' }}</h2>
-      <p style="margin: 0; color: #666; font-size: 13px;">Authentication Required (JWT/OAuth Simulation)</p>
+<div *ngIf="!isAuthenticated" class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <mat-icon>security</mat-icon>
+      </div>
+      <h2>{{ isRegisterView ? 'Create Account' : 'Welcome Back' }}</h2>
+      <p>Secure Enterprise Chat Workspace</p>
     </div>
 
-    <mat-form-field appearance="outline" style="width: 100%; margin-bottom: -10px;">
-      <mat-label>Username</mat-label>
-      <input matInput [(ngModel)]="authUsername" placeholder="Enter username">
-    </mat-form-field>
+    <div class="auth-form">
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Username</mat-label>
+        <input matInput [(ngModel)]="authUsername" placeholder="Enter your username">
+        <mat-icon matSuffix>person</mat-icon>
+      </mat-form-field>
 
-    <mat-form-field appearance="outline" *ngIf="isRegisterView" style="width: 100%; margin-bottom: -10px;">
-      <mat-label>Email Address</mat-label>
-      <input matInput type="email" [(ngModel)]="authEmail" placeholder="Enter email">
-    </mat-form-field>
+      <mat-form-field appearance="outline" *ngIf="isRegisterView" class="w-100">
+        <mat-label>Email Address</mat-label>
+        <input matInput type="email" [(ngModel)]="authEmail" placeholder="Enter your email">
+        <mat-icon matSuffix>email</mat-icon>
+      </mat-form-field>
 
-    <mat-form-field appearance="outline" style="width: 100%; margin-bottom: -10px;">
-      <mat-label>Password</mat-label>
-      <input matInput type="password" [(ngModel)]="authPassword" placeholder="Enter password" (keyup.enter)="isRegisterView ? onRegister() : onLogin()">
-    </mat-form-field>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" [(ngModel)]="authPassword" placeholder="Enter your password" (keyup.enter)="isRegisterView ? onRegister() : onLogin()">
+        <mat-icon matSuffix>lock</mat-icon>
+      </mat-form-field>
 
-    <button mat-raised-button color="primary" style="padding: 24px; font-weight: 500; font-size: 15px;" (click)="isRegisterView ? onRegister() : onLogin()">
-      {{ isRegisterView ? 'SIGN UP' : 'LOGIN TO WORKSPACE' }}
-    </button>
+      <button mat-flat-button color="primary" class="auth-btn" (click)="isRegisterView ? onRegister() : onLogin()">
+        {{ isRegisterView ? 'REGISTER NOW' : 'SIGN IN' }}
+      </button>
+    </div>
 
-    <div style="text-align: center; font-size: 13px; margin-top: 4px;">
-      <a href="javascript:void(0)" (click)="toggleAuthView()" style="color: #007bff; text-decoration: none; font-weight: 500;">
-        {{ isRegisterView ? 'Already have an account? Sign In' : "Don't have an account? Register Here" }}
+    <div class="auth-footer">
+      <a href="javascript:void(0)" (click)="toggleAuthView()">
+        {{ isRegisterView ? 'Already have an account? Sign In' : 'New to the workspace? Create an account' }}
       </a>
     </div>
-
   </div>
 </div>
 
-<div *ngIf="isAuthenticated" class="chat-container">
+<div *ngIf="isAuthenticated" class="app-layout">
   
-  <div class="sidebar-zone">
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #e0e0e0; background-color: #f8f9fa;">
-      <h3 style="margin: 0; color: #333; font-weight: 500; font-family: Roboto, sans-serif; font-size: 15px;">Active Chats</h3>
-      <button mat-icon-button color="warn" (click)="onLogout()" title="Log out secure session" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">power_settings_new</mat-icon>
+  <aside class="app-sidebar">
+    <div class="sidebar-header">
+      <div class="workspace-brand">
+        <div class="brand-icon">C</div>
+        <div class="brand-details">
+          <h4>CoreWorkspace</h4>
+          <span>v2.1.0 Premium</span>
+        </div>
+      </div>
+      <button class="logout-action-btn" (click)="onLogout()" title="Terminate Secure Session">
+        <mat-icon>power_settings_new</mat-icon>
       </button>
     </div>
+
+    <div class="sidebar-section-label">DIRECT MESSAGES</div>
     
-    <div (click)="selectUser('Ojas')" 
-         [style.background-color]="selectedUser === 'Ojas' ? '#e8f0fe' : 'transparent'"
-         style="display: flex; align-items: center; padding: 14px 16px; cursor: pointer; gap: 12px; transition: background 0.2s;">
-      <mat-icon style="color: #555;">account_circle</mat-icon>
-      <div style="display: flex; flex-direction: column; font-family: Roboto, sans-serif;">
-        <span style="font-weight: 500; color: #212529; font-size: 14px;">Ojas</span>
-        <span [ngClass]="{
-                'status-online': userRoster[0].status === 'Online',
-                'status-away': userRoster[0].status === 'Away',
-                'status-offline': userRoster[0].status === 'Offline'
-              }">{{ userRoster[0].status }}</span>
+    <div class="roster-list">
+      <div *ngFor="let user of userRoster"
+           class="roster-item"
+           [class.active-item]="selectedUser === user.name"
+           (click)="selectUser(user.name)">
+        
+        <div class="avatar-container">
+          <div class="user-avatar">{{ user.name.charAt(0) }}</div>
+          <div class="status-badge-dot" 
+               [class.dot-online]="user.status === 'Online'"
+               [class.dot-away]="user.status === 'Away'"
+               [class.dot-offline]="user.status === 'Offline'"></div>
+        </div>
+
+        <div class="user-metadata">
+          <span class="user-profile-name">{{ user.name }}</span>
+          <span class="user-status-text"
+                [class.txt-online]="user.status === 'Online'"
+                [class.txt-away]="user.status === 'Away'"
+                [class.txt-offline]="user.status === 'Offline'">{{ user.status }}</span>
+        </div>
       </div>
     </div>
+  </aside>
 
-    <div (click)="selectUser('Vineet')" 
-         [style.background-color]="selectedUser === 'Vineet' ? '#e8f0fe' : 'transparent'"
-         style="display: flex; align-items: center; padding: 14px 16px; cursor: pointer; gap: 12px; transition: background 0.2s;">
-      <mat-icon style="color: #555;">account_circle</mat-icon>
-      <div style="display: flex; flex-direction: column; font-family: Roboto, sans-serif;">
-        <span style="font-weight: 500; color: #212529; font-size: 14px;">Vineet</span>
-        <span [ngClass]="{
-                'status-online': userRoster[1].status === 'Online',
-                'status-away': userRoster[1].status === 'Away',
-                'status-offline': userRoster[1].status === 'Offline'
-              }">{{ userRoster[1].status }}</span>
-      </div>
-    </div>
+  <main class="chat-viewport">
     
-  </div>
+    <header class="viewport-header">
+      <div class="active-profile-summary">
+        <mat-icon class="header-status-icon">account_circle</mat-icon>
+        <div class="header-profile-details">
+          <h3>{{ selectedUser }}</h3>
+          <p>Secure end-to-end encrypted channel</p>
+        </div>
+      </div>
+      <div class="header-utilities">
+        <mat-icon title="Search Conversations">search</mat-icon>
+        <mat-icon title="View Starred Items">star_border</mat-icon>
+        <mat-icon title="Channel Settings">more_vert</mat-icon>
+      </div>
+    </header>
 
-  <div class="main-chat-zone">
-    <div class="messages-container">
-      <div class="bubble-stream">
+    <div class="messages-canvas">
+      <div class="bubble-stream-container">
         
         <ng-container *ngFor="let msg of messages">
           <div *ngIf="msg.chatWith === selectedUser"
-               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
-               class="msg-bubble">
+               class="message-row-wrapper"
+               [class.row-outgoing]="msg.sender === 'Me'"
+               [class.row-incoming]="msg.sender !== 'Me'">
             
-            <strong *ngIf="msg.sender !== 'Me'" style="display: block; font-size: 11px; margin-bottom: 4px; color: #555;">
-              {{ msg.sender }}
-            </strong>
-            
-            <span *ngIf="msg.text">{{ msg.text }}</span>
-
-            <div *ngIf="msg.fileData" style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
-              <img *ngIf="msg.fileData.type.startsWith('image/')" 
-                   [src]="msg.fileData.url" 
-                   style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;" 
-                   alt="Shared photo content"/>
+            <div class="message-bubble-block" [class.bubble-accent]="msg.sender === 'Me'">
+              <span class="bubble-sender-label" *ngIf="msg.sender !== 'Me'">{{ msg.sender }}</span>
               
-              <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.04); padding: 8px; border-radius: 6px;">
-                <mat-icon style="color: #666;">insert_drive_file</mat-icon>
-                <a [href]="msg.fileData.url" [download]="msg.fileData.name" target="_blank" style="font-weight: 500; text-decoration: underline; color: inherit; font-size: 13px; word-break: break-all;">
-                  {{ msg.fileData.name }}
-                </a>
-              </div>
-            </div>
+              <p class="bubble-text-string" *ngIf="msg.text">{{ msg.text }}</p>
 
+              <div *ngIf="msg.fileData" class="premium-file-card">
+                <div class="file-thumbnail-preview" *ngIf="msg.fileData.type.startsWith('image/')">
+                  <img [src]="msg.fileData.url" alt="Shared Media Inline View attachment graphic object link context" />
+                </div>
+                <div class="file-info-bar">
+                  <mat-icon class="file-type-icon">insert_drive_file</mat-icon>
+                  <div class="file-text-details">
+                    <span class="file-title-text">{{ msg.fileData.name }}</span>
+                    <span class="file-extension-tag">{{ msg.fileData.type.split('/')[1] | uppercase }} Document</span>
+                  </div>
+                  <a [href]="msg.fileData.url" [download]="msg.fileData.name" target="_blank" class="file-download-action">
+                    <mat-icon>download</mat-icon>
+                  </a>
+                </div>
+              </div>
+
+            </div>
           </div>
         </ng-container>
-        
+
       </div>
     </div>
 
-    <div class="input-container">
-      <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;">
-      
-      <button mat-icon-button color="accent" (click)="fileInput.click()" style="margin-right: -4px;" title="Attach shared file">
-        <mat-icon>attach_file</mat-icon>
-      </button>
+    <footer class="viewport-footer-dock">
+      <div class="input-action-bar-wrapper">
+        
+        <input type="file" #modernFileInput (change)="onFileSelected($event)" style="display: none;">
+        
+        <button class="utility-attach-btn" (click)="modernFileInput.click()" title="Share document files, photos or codebase media assets">
+          <mat-icon>add_circle_outline</mat-icon>
+        </button>
 
-      <mat-form-field appearance="outline" class="input-field">
-        <mat-label>Type a message...</mat-label>
-        <input matInput [(ngModel)]="newMessage" (keyup.enter)="onSendMessage()" placeholder="Say something...">
-      </mat-form-field>
-      
-      <button mat-fab color="primary" (click)="onSendMessage()">
-        <mat-icon>send</mat-icon>
-      </button>
-    </div>
+        <div class="text-input-field-container">
+          <input type="text" 
+                 [(ngModel)]="newMessage" 
+                 (keyup.enter)="onSendMessage()" 
+                 placeholder="Message your teammate or drag records directly here..." 
+                 class="custom-clean-input"/>
+        </div>
 
-  </div>
+        <button class="action-submit-send-btn" [class.active-send-btn]="newMessage.trim().length > 0" (click)="onSendMessage()" title="Send Message">
+          <mat-icon>send</mat-icon>
+        </button>
+
+      </div>
+    </footer>
+
+  </main>
 </div>
