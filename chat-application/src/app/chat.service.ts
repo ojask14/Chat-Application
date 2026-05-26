@@ -23,7 +23,13 @@ export class ChatService {
     this.socket = new WebSocket('wss://echo.websocket.org');
 
     this.socket.onmessage = (event) => {
-      this.messageSubject.next(event.data);
+      try {
+        // Try parsing JSON payloads directly if transmitted as structured tracking file items
+        const data = JSON.parse(event.data);
+        this.messageSubject.next(data);
+      } catch (e) {
+        this.messageSubject.next(event.data);
+      }
     };
 
     this.socket.onclose = () => {
@@ -39,10 +45,25 @@ export class ChatService {
     return this.presenceSubject.asObservable();
   }
 
-  sendMessage(plainText: string): void {
+  sendMessage(messageObj: any): void {
     if (this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(plainText); // Send clean, non-nested string lines
+      if (typeof messageObj === 'object') {
+        this.socket.send(JSON.stringify(messageObj));
+      } else {
+        this.socket.send(messageObj);
+      }
     }
+  }
+
+  /**
+   * New Week 5 File Processing Method: Converts file stream buffers 
+   * into local secure object links to enable seamless inline media rendering.
+   */
+  uploadFile(file: File): Promise<string> {
+    return new Promise((resolve) => {
+      const localUrl = URL.createObjectURL(file);
+      resolve(localUrl);
+    });
   }
 
   private startPresenceSimulation(): void {
@@ -57,6 +78,6 @@ export class ChatService {
         username: randomUser,
         status: randomStatus
       });
-    }, 6000); // Transitions status state tags clearly every 6 seconds
+    }, 6000);
   }
 }

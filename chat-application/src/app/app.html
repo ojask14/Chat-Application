@@ -41,10 +41,27 @@
           <div *ngIf="msg.chatWith === selectedUser"
                [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
                class="msg-bubble">
-            <strong *ngIf="msg.sender !== 'Me'" style="display: block; font-size: 11px; margin-bottom: 2px; color: #555;">
+            
+            <strong *ngIf="msg.sender !== 'Me'" style="display: block; font-size: 11px; margin-bottom: 4px; color: #555;">
               {{ msg.sender }}
             </strong>
-            {{ msg.text }}
+            
+            <span *ngIf="msg.text">{{ msg.text }}</span>
+
+            <div *ngIf="msg.fileData" style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
+              <img *ngIf="msg.fileData.type.startsWith('image/')" 
+                   [src]="msg.fileData.url" 
+                   style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;" 
+                   alt="Shared photo content file attachment inline preview row"/>
+              
+              <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.04); padding: 8px; border-radius: 6px;">
+                <mat-icon style="color: #666;">insert_drive_file</mat-icon>
+                <a [href]="msg.fileData.url" [download]="msg.fileData.name" target="_blank" style="font-weight: 500; text-decoration: underline; color: inherit; font-size: 13px; word-break: break-all; overflow-wrap: anywhere;">
+                  {{ msg.fileData.name }}
+                </a>
+              </div>
+            </div>
+
           </div>
         </ng-container>
         
@@ -52,10 +69,18 @@
     </div>
 
     <div class="input-container">
+      
+      <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;">
+      
+      <button mat-icon-button color="accent" (click)="fileInput.click()" style="margin-right: -4px;" title="Attach shared data file media documentation">
+        <mat-icon>attach_file</mat-icon>
+      </button>
+
       <mat-form-field appearance="outline" class="input-field">
         <mat-label>Type a message...</mat-label>
         <input matInput [(ngModel)]="newMessage" (keyup.enter)="onSendMessage()" placeholder="Say something...">
       </mat-form-field>
+      
       <button mat-fab color="primary" (click)="onSendMessage()">
         <mat-icon>send</mat-icon>
       </button>

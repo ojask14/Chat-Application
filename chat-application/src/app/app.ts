@@ -8,9 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { ChatService, PresenceUpdate } from './chat.service';
 
 interface Message {
-  text: string;
+  text?: string;
   sender: 'Ojas' | 'Vineet' | 'Me';
   chatWith: 'Ojas' | 'Vineet';
+  fileData?: {
+    name: string;
+    url: string;
+    type: string;
+  };
 }
 
 interface UserProfile {
@@ -46,37 +51,37 @@ export class AppComponent implements OnInit {
   constructor(private chatService: ChatService) {}
 
   ngOnInit(): void {
-    // 1. Process incoming WebSocket text stream
+    // 1. Process incoming WebSocket text streams and simulated file echo shares
     this.chatService.getMessages().subscribe((rawMsg: any) => {
       if (typeof rawMsg === 'string' && rawMsg.includes('Request served by')) return;
-      if (rawMsg?.text && rawMsg.text.includes('Request served by')) return;
+      
+      let incomingMsg: Message;
 
-      let extractedText = typeof rawMsg === 'string' ? rawMsg : rawMsg?.text || JSON.stringify(rawMsg);
+      // Handle file structures vs text lines sent across the service pipeline
+      if (rawMsg && typeof rawMsg === 'object' && rawMsg.fileData) {
+        incomingMsg = {
+          sender: this.selectedUser,
+          chatWith: this.selectedUser === 'Ojas' ? 'Vineet' : 'Ojas', // True cross-routing to opposite user
+          fileData: rawMsg.fileData
+        };
+      } else {
+        let extractedText = typeof rawMsg === 'string' ? rawMsg : rawMsg?.text || JSON.stringify(rawMsg);
+        try {
+          const parsed = JSON.parse(extractedText);
+          if (parsed && parsed.text) extractedText = parsed.text;
+        } catch (e) {}
 
-      try {
-        const parsed = JSON.parse(extractedText);
-        if (parsed && parsed.text) extractedText = parsed.text;
-      } catch (e) {}
+        incomingMsg = {
+          text: extractedText,
+          sender: this.selectedUser, 
+          chatWith: this.selectedUser === 'Ojas' ? 'Vineet' : 'Ojas'
+        };
+      }
 
-      /**
-       * TRUE REAL-TIME CROSS ROUTING:
-       * If I am currently looking at Ojas's box and type a message, I am acting as "Me" sending to Ojas.
-       * Therefore, when the message goes through the network, it should appear in VINEET'S chat history 
-       * as an incoming message from OJAS!
-       */
-      const currentSender = this.selectedUser; 
-      const destinationWindow = this.selectedUser === 'Ojas' ? 'Vineet' : 'Ojas';
-
-      const crossRoutedMessage: Message = {
-        text: extractedText,
-        sender: currentSender,      // Shows up labeled as the person who actually typed it
-        chatWith: destinationWindow // Appends directly into the opposite person's history panel!
-      };
-
-      this.messages = [...this.messages, crossRoutedMessage];
+      this.messages = [...this.messages, incomingMsg];
     });
 
-    // 2. Direct live roster status updates mapping
+    // 2. Presence tracking logic integration
     this.chatService.getPresenceUpdates().subscribe((update: PresenceUpdate) => {
       const nameMatch = update.username.toLowerCase();
       if (nameMatch === 'ojas') {
@@ -94,7 +99,6 @@ export class AppComponent implements OnInit {
   onSendMessage(): void {
     if (!this.newMessage.trim()) return;
 
-    // Local Outgoing Blue Message Bubble (Saved locally as my sent history for the open tab)
     const outboundPayload: Message = {
       text: this.newMessage,
       sender: 'Me',
@@ -102,10 +106,32 @@ export class AppComponent implements OnInit {
     };
 
     this.messages = [...this.messages, outboundPayload];
-    
-    // Transmit message through WebSocket to simulate live delivery network
     this.chatService.sendMessage(this.newMessage);
-    
     this.newMessage = '';
+  }
+
+  // Processes local files uploaded by clicking the attachment icon
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (!file) return;
+
+    // Use our Angular service utility helper to format data cleanly
+    this.chatService.uploadFile(file).then((fileUrl: string) => {
+      const filePayload: Message = {
+        sender: 'Me',
+        chatWith: this.selectedUser,
+        fileData: {
+          name: file.name,
+          url: fileUrl,
+          type: file.type
+        }
+      };
+
+      // Push file content box dynamically into history stack
+      this.messages = [...this.messages, filePayload];
+      
+      // Simulate transmitting the shared attachment via socket channel
+      this.chatService.sendMessage(filePayload);
+    });
   }
 }
