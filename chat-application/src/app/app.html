@@ -39,8 +39,11 @@
         
         <ng-container *ngFor="let msg of messages">
           <div *ngIf="msg.chatWith === selectedUser"
-               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender === 'Them'}"
+               [ngClass]="{'msg-outgoing': msg.sender === 'Me', 'msg-incoming': msg.sender !== 'Me'}"
                class="msg-bubble">
+            <strong *ngIf="msg.sender !== 'Me'" style="display: block; font-size: 11px; margin-bottom: 2px; color: #555;">
+              {{ msg.sender }}
+            </strong>
             {{ msg.text }}
           </div>
         </ng-container>

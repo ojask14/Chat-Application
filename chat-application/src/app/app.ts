@@ -9,7 +9,7 @@ import { ChatService, PresenceUpdate } from './chat.service';
 
 interface Message {
   text: string;
-  sender: 'Me' | 'Them';
+  sender: 'Ojas' | 'Vineet' | 'Me';
   chatWith: 'Ojas' | 'Vineet';
 }
 
@@ -48,41 +48,35 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     // 1. Process incoming WebSocket text stream
     this.chatService.getMessages().subscribe((rawMsg: any) => {
-      // Filter out system cloud server load balancer text
       if (typeof rawMsg === 'string' && rawMsg.includes('Request served by')) return;
       if (rawMsg?.text && rawMsg.text.includes('Request served by')) return;
 
-      // Extract the plain text string smoothly
-      let extractedText = '';
-      if (typeof rawMsg === 'string') {
-        extractedText = rawMsg;
-      } else if (rawMsg?.text) {
-        extractedText = rawMsg.text;
-      } else {
-        extractedText = JSON.stringify(rawMsg);
-      }
+      let extractedText = typeof rawMsg === 'string' ? rawMsg : rawMsg?.text || JSON.stringify(rawMsg);
 
-      // Safeguard: Extract message text if it was stringified as an object by previous logic versions
       try {
         const parsed = JSON.parse(extractedText);
-        if (parsed && parsed.text) {
-          extractedText = parsed.text;
-        }
-      } catch (e) {
-        // Not a JSON string, use raw extracted text safely
-      }
+        if (parsed && parsed.text) extractedText = parsed.text;
+      } catch (e) {}
 
-      // Live Destination Router: Force the echoed string to appear as an incoming reply block
-      const incomingReply: Message = {
+      /**
+       * TRUE REAL-TIME CROSS ROUTING:
+       * If I am currently looking at Ojas's box and type a message, I am acting as "Me" sending to Ojas.
+       * Therefore, when the message goes through the network, it should appear in VINEET'S chat history 
+       * as an incoming message from OJAS!
+       */
+      const currentSender = this.selectedUser; 
+      const destinationWindow = this.selectedUser === 'Ojas' ? 'Vineet' : 'Ojas';
+
+      const crossRoutedMessage: Message = {
         text: extractedText,
-        sender: 'Them', // Flags it as the other person replying to you
-        chatWith: this.selectedUser // Loads explicitly into the view screen you are staring at
+        sender: currentSender,      // Shows up labeled as the person who actually typed it
+        chatWith: destinationWindow // Appends directly into the opposite person's history panel!
       };
 
-      this.messages = [...this.messages, incomingReply];
+      this.messages = [...this.messages, crossRoutedMessage];
     });
 
-    // 2. Map user status updates directly without index risks
+    // 2. Direct live roster status updates mapping
     this.chatService.getPresenceUpdates().subscribe((update: PresenceUpdate) => {
       const nameMatch = update.username.toLowerCase();
       if (nameMatch === 'ojas') {
@@ -100,18 +94,16 @@ export class AppComponent implements OnInit {
   onSendMessage(): void {
     if (!this.newMessage.trim()) return;
 
-    const currentActiveView = this.selectedUser;
-
-    // Push local outgoing blue bubble immediately into the open window view
+    // Local Outgoing Blue Message Bubble (Saved locally as my sent history for the open tab)
     const outboundPayload: Message = {
       text: this.newMessage,
       sender: 'Me',
-      chatWith: currentActiveView
+      chatWith: this.selectedUser
     };
 
     this.messages = [...this.messages, outboundPayload];
     
-    // Transmit plain message string text straight across the WebSocket connection channel
+    // Transmit message through WebSocket to simulate live delivery network
     this.chatService.sendMessage(this.newMessage);
     
     this.newMessage = '';
