@@ -1,7 +1,49 @@
-<div class="chat-container">
+<div *ngIf="!isAuthenticated" style="display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; background-color: #f0f2f5; font-family: Roboto, sans-serif;">
+  <div style="background: #ffffff; padding: 32px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 360px; display: flex; flex-direction: column; gap: 16px;">
+    
+    <div style="text-align: center; margin-bottom: 8px;">
+      <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #007bff;">lock</mat-icon>
+      <h2 style="margin: 8px 0 4px 0; color: #333;">{{ isRegisterView ? 'Create Account' : 'Secure Chat Workspace' }}</h2>
+      <p style="margin: 0; color: #666; font-size: 13px;">Authentication Required (JWT/OAuth Simulation)</p>
+    </div>
+
+    <mat-form-field appearance="outline" style="width: 100%; margin-bottom: -10px;">
+      <mat-label>Username</mat-label>
+      <input matInput [(ngModel)]="authUsername" placeholder="Enter username">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="isRegisterView" style="width: 100%; margin-bottom: -10px;">
+      <mat-label>Email Address</mat-label>
+      <input matInput type="email" [(ngModel)]="authEmail" placeholder="Enter email">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" style="width: 100%; margin-bottom: -10px;">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" [(ngModel)]="authPassword" placeholder="Enter password" (keyup.enter)="isRegisterView ? onRegister() : onLogin()">
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" style="padding: 24px; font-weight: 500; font-size: 15px;" (click)="isRegisterView ? onRegister() : onLogin()">
+      {{ isRegisterView ? 'SIGN UP' : 'LOGIN TO WORKSPACE' }}
+    </button>
+
+    <div style="text-align: center; font-size: 13px; margin-top: 4px;">
+      <a href="javascript:void(0)" (click)="toggleAuthView()" style="color: #007bff; text-decoration: none; font-weight: 500;">
+        {{ isRegisterView ? 'Already have an account? Sign In' : "Don't have an account? Register Here" }}
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<div *ngIf="isAuthenticated" class="chat-container">
   
   <div class="sidebar-zone">
-    <h3 style="padding: 16px 16px 8px 16px; margin: 0; color: #555; font-weight: 500; font-family: Roboto, sans-serif;">Active Chats</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #e0e0e0; background-color: #f8f9fa;">
+      <h3 style="margin: 0; color: #333; font-weight: 500; font-family: Roboto, sans-serif; font-size: 15px;">Active Chats</h3>
+      <button mat-icon-button color="warn" (click)="onLogout()" title="Log out secure session" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">power_settings_new</mat-icon>
+      </button>
+    </div>
     
     <div (click)="selectUser('Ojas')" 
          [style.background-color]="selectedUser === 'Ojas' ? '#e8f0fe' : 'transparent'"
@@ -52,11 +94,11 @@
               <img *ngIf="msg.fileData.type.startsWith('image/')" 
                    [src]="msg.fileData.url" 
                    style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;" 
-                   alt="Shared photo content file attachment inline preview row"/>
+                   alt="Shared photo content"/>
               
               <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.04); padding: 8px; border-radius: 6px;">
                 <mat-icon style="color: #666;">insert_drive_file</mat-icon>
-                <a [href]="msg.fileData.url" [download]="msg.fileData.name" target="_blank" style="font-weight: 500; text-decoration: underline; color: inherit; font-size: 13px; word-break: break-all; overflow-wrap: anywhere;">
+                <a [href]="msg.fileData.url" [download]="msg.fileData.name" target="_blank" style="font-weight: 500; text-decoration: underline; color: inherit; font-size: 13px; word-break: break-all;">
                   {{ msg.fileData.name }}
                 </a>
               </div>
@@ -69,10 +111,9 @@
     </div>
 
     <div class="input-container">
-      
       <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;">
       
-      <button mat-icon-button color="accent" (click)="fileInput.click()" style="margin-right: -4px;" title="Attach shared data file media documentation">
+      <button mat-icon-button color="accent" (click)="fileInput.click()" style="margin-right: -4px;" title="Attach shared file">
         <mat-icon>attach_file</mat-icon>
       </button>
 

@@ -42,6 +42,13 @@ export class AppComponent implements OnInit {
   newMessage: string = '';
   selectedUser: 'Ojas' | 'Vineet' = 'Ojas'; 
   messages: Message[] = [];
+  
+  // --- Week 6 Authentication States ---
+  isAuthenticated: boolean = false;
+  isRegisterView: boolean = false;
+  authUsername: string = '';
+  authPassword: string = '';
+  authEmail: string = '';
 
   userRoster: UserProfile[] = [
     { name: 'Ojas', status: 'Online' },
@@ -51,17 +58,20 @@ export class AppComponent implements OnInit {
   constructor(private chatService: ChatService) {}
 
   ngOnInit(): void {
-    // 1. Process incoming WebSocket text streams and simulated file echo shares
+    // Check if user is already logged in via token storage simulation
+    this.checkRouteProtection();
+
+    // 1. Process incoming WebSocket streams
     this.chatService.getMessages().subscribe((rawMsg: any) => {
       if (typeof rawMsg === 'string' && rawMsg.includes('Request served by')) return;
+      if (!this.isAuthenticated) return; // Prevent parsing messages if blocked by guard
       
       let incomingMsg: Message;
 
-      // Handle file structures vs text lines sent across the service pipeline
       if (rawMsg && typeof rawMsg === 'object' && rawMsg.fileData) {
         incomingMsg = {
           sender: this.selectedUser,
-          chatWith: this.selectedUser === 'Ojas' ? 'Vineet' : 'Ojas', // True cross-routing to opposite user
+          chatWith: this.selectedUser === 'Ojas' ? 'Vineet' : 'Ojas', 
           fileData: rawMsg.fileData
         };
       } else {
@@ -81,7 +91,7 @@ export class AppComponent implements OnInit {
       this.messages = [...this.messages, incomingMsg];
     });
 
-    // 2. Presence tracking logic integration
+    // 2. Presence tracking logic
     this.chatService.getPresenceUpdates().subscribe((update: PresenceUpdate) => {
       const nameMatch = update.username.toLowerCase();
       if (nameMatch === 'ojas') {
@@ -92,6 +102,45 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // --- Week 6 Authentication Router Guards ---
+  checkRouteProtection(): void {
+    const token = localStorage.getItem('mock_jwt_token');
+    this.isAuthenticated = !!token;
+  }
+
+  onLogin(): void {
+    if (!this.authUsername.trim() || !this.authPassword.trim()) return;
+    
+    // Simulate setting a verified JWT token signature payload on success
+    localStorage.setItem('mock_jwt_token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mockPayloadDataSignature');
+    this.isAuthenticated = true;
+    
+    // Reset inputs
+    this.authUsername = '';
+    this.authPassword = '';
+  }
+
+  onRegister(): void {
+    if (!this.authUsername.trim() || !this.authPassword.trim() || !this.authEmail.trim()) return;
+    // Toggle view back to login screen after simulated user creation
+    this.isRegisterView = false;
+    alert('Registration successful! Please login with your credentials.');
+  }
+
+  onLogout(): void {
+    localStorage.removeItem('mock_jwt_token');
+    this.isAuthenticated = false;
+    this.messages = []; // Clear chat logs on security reset
+  }
+
+  toggleAuthView(): void {
+    this.isRegisterView = !this.isRegisterView;
+    this.authUsername = '';
+    this.authPassword = '';
+    this.authEmail = '';
+  }
+
+  // --- Existing Chat Methods ---
   selectUser(username: 'Ojas' | 'Vineet'): void {
     this.selectedUser = username;
   }
@@ -110,12 +159,10 @@ export class AppComponent implements OnInit {
     this.newMessage = '';
   }
 
-  // Processes local files uploaded by clicking the attachment icon
   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
     if (!file) return;
 
-    // Use our Angular service utility helper to format data cleanly
     this.chatService.uploadFile(file).then((fileUrl: string) => {
       const filePayload: Message = {
         sender: 'Me',
@@ -127,10 +174,7 @@ export class AppComponent implements OnInit {
         }
       };
 
-      // Push file content box dynamically into history stack
       this.messages = [...this.messages, filePayload];
-      
-      // Simulate transmitting the shared attachment via socket channel
       this.chatService.sendMessage(filePayload);
     });
   }
